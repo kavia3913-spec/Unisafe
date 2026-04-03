@@ -1,0 +1,796 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<link rel="manifest" href="./manifest.json">
+<meta name="theme-color" content="#1c1a16">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>UniSafe | Student Portal</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=Sora:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+    :root {
+      --cream:#f5f0e8; --cream-deep:#ece6d9; --paper:#faf8f4;
+      --ink:#1c1a16; --ink-mid:#3d3a33; --ink-light:#6b6558; --ink-faint:#9e9889;
+      --amber:#c8820a; --amber-light:#e8a020; --amber-glow:rgba(200,130,10,0.12); --amber-pale:rgba(200,130,10,0.06);
+      --danger:#b53d2e; --danger-bg:rgba(181,61,46,0.08);
+      --safe:#2e7d52; --safe-bg:rgba(46,125,82,0.08);
+      --border:rgba(28,26,22,0.12); --border-mid:rgba(28,26,22,0.20);
+      --shadow-sm:0 1px 4px rgba(28,26,22,0.08); --shadow-md:0 4px 16px rgba(28,26,22,0.10); --shadow-lg:0 12px 40px rgba(28,26,22,0.14);
+      --radius-sm:6px; --radius-md:10px; --radius-lg:16px; --radius-xl:22px; --t:0.18s ease;
+    }
+    html { font-size:16px; scroll-behavior:smooth; }
+    body {
+      font-family:'Sora',sans-serif; background:var(--cream); color:var(--ink);
+      min-height:100vh; padding:32px 20px 64px; line-height:1.6;
+      background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='200' height='200' filter='url(%23noise)' opacity='0.03'/%3E%3C/svg%3E");
+    }
+    .container { max-width:820px; margin:0 auto; }
+
+    /* HEADER */
+    .header {
+      display:grid; grid-template-columns:auto 1fr; align-items:center; gap:20px;
+      padding:28px 32px; background:var(--paper); border:1px solid var(--border-mid);
+      border-radius:var(--radius-xl); margin-bottom:28px; box-shadow:var(--shadow-md);
+      position:relative; overflow:hidden;
+    }
+    .header::before { content:''; position:absolute; top:0; left:0; right:0; height:3px; background:linear-gradient(90deg,var(--amber) 0%,var(--amber-light) 60%,transparent 100%); }
+    .header-seal { width:56px; height:56px; border:2px solid var(--amber); border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:24px; background:var(--amber-pale); flex-shrink:0; position:relative; }
+    .header-seal::after { content:''; position:absolute; inset:3px; border:1px dashed rgba(200,130,10,0.3); border-radius:50%; }
+    .header-text h1 { font-family:'Playfair Display',serif; font-size:22px; font-weight:700; letter-spacing:-0.3px; color:var(--ink); line-height:1.2; margin-bottom:4px; }
+    .header-text p { font-size:12px; color:var(--ink-light); display:flex; align-items:center; gap:10px; flex-wrap:wrap; }
+    .badge { display:inline-flex; align-items:center; gap:5px; padding:3px 10px; background:var(--amber-glow); color:var(--amber); border:1px solid rgba(200,130,10,0.25); border-radius:20px; font-size:11px; font-weight:600; font-family:'JetBrains Mono',monospace; letter-spacing:0.02em; }
+    .header-divider { color:var(--ink-faint); font-size:11px; }
+
+    /* CARDS */
+    .card { background:var(--paper); border:1px solid var(--border); border-radius:var(--radius-lg); padding:28px 32px; margin-bottom:20px; box-shadow:var(--shadow-sm); transition:box-shadow var(--t); }
+    .card:hover { box-shadow:var(--shadow-md); }
+    .card-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:24px; flex-wrap:wrap; gap:12px; }
+    .card-title { display:flex; align-items:center; gap:12px; }
+    .card-title-label { font-family:'Playfair Display',serif; font-size:17px; font-weight:600; color:var(--ink); letter-spacing:-0.2px; }
+    .card-title-num { display:inline-flex; align-items:center; justify-content:center; width:26px; height:26px; background:var(--cream-deep); border:1px solid var(--border-mid); border-radius:50%; font-size:11px; font-weight:600; color:var(--ink-light); font-family:'JetBrains Mono',monospace; }
+
+    /* BUTTONS */
+    .btn { display:inline-flex; align-items:center; justify-content:center; gap:7px; padding:10px 18px; border-radius:var(--radius-md); font-size:13px; font-weight:600; font-family:'Sora',sans-serif; cursor:pointer; transition:all var(--t); border:1px solid transparent; text-decoration:none; letter-spacing:0.01em; user-select:none; }
+    .btn:focus-visible { outline:2px solid var(--amber); outline-offset:2px; }
+    .btn:disabled { opacity:0.6; cursor:not-allowed; transform:none !important; box-shadow:none !important; }
+    .btn-primary { background:var(--ink); color:var(--cream); border-color:var(--ink); }
+    .btn-primary:hover:not(:disabled) { background:var(--ink-mid); transform:translateY(-1px); box-shadow:0 4px 12px rgba(28,26,22,0.2); }
+    .btn-amber { background:var(--amber); color:#fff; border-color:var(--amber); }
+    .btn-amber:hover:not(:disabled) { background:#b37309; border-color:#b37309; transform:translateY(-1px); box-shadow:0 4px 12px rgba(200,130,10,0.25); }
+    .btn-ghost { background:transparent; border-color:var(--border-mid); color:var(--ink-mid); }
+    .btn-ghost:hover:not(:disabled) { background:var(--cream-deep); }
+    .btn-danger { background:transparent; border-color:rgba(181,61,46,0.3); color:var(--danger); }
+    .btn-danger:hover:not(:disabled) { background:var(--danger-bg); }
+    .btn-sm { padding:7px 13px; font-size:12px; }
+    .btn-icon { width:34px; height:34px; padding:0; border-radius:var(--radius-sm); }
+
+    /* SESSION */
+    .session-info { display:flex; align-items:center; gap:16px; padding:18px 20px; background:var(--cream); border:1px solid var(--border-mid); border-radius:var(--radius-md); flex-wrap:wrap; }
+    .session-avatar { width:46px; height:46px; background:var(--ink); border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:17px; font-weight:700; color:var(--cream); flex-shrink:0; font-family:'Playfair Display',serif; }
+    .session-details { flex:1; min-width:0; }
+    .session-name { font-weight:600; font-size:15px; margin-bottom:2px; color:var(--ink); }
+    .session-id { font-size:11px; color:var(--ink-faint); font-family:'JetBrains Mono',monospace; letter-spacing:0.03em; }
+    .session-empty { text-align:center; padding:40px 24px; color:var(--ink-light); }
+    .session-empty-icon { font-size:40px; margin-bottom:12px; opacity:0.35; }
+    .session-empty p:first-of-type { font-family:'Playfair Display',serif; font-size:16px; color:var(--ink-mid); margin-bottom:4px; }
+    .session-empty p:last-of-type { font-size:13px; color:var(--ink-faint); }
+
+    /* WARNINGS */
+    .warning-banner { display:flex; align-items:flex-start; gap:14px; padding:16px 20px; background:#fef3ee; border:1px solid rgba(181,61,46,0.22); border-left:3px solid var(--danger); border-radius:var(--radius-md); margin-bottom:20px; }
+    .warning-banner-icon { font-size:18px; margin-top:1px; flex-shrink:0; }
+    .warning-banner-content { flex:1; }
+    .warning-banner-title { font-weight:600; font-size:13px; color:var(--danger); text-transform:uppercase; letter-spacing:0.08em; margin-bottom:2px; }
+    .warning-banner-text { font-size:13px; color:var(--ink-mid); }
+    .admin-issue { padding:16px 18px; background:#fffbf0; border:1px solid rgba(200,130,10,0.20); border-left:3px solid var(--amber); border-radius:var(--radius-md); margin-bottom:10px; }
+    .admin-issue-header { display:flex; align-items:center; gap:7px; font-weight:600; font-size:11px; color:var(--amber); text-transform:uppercase; letter-spacing:0.1em; margin-bottom:8px; }
+    .admin-issue-text { color:var(--ink-mid); font-size:14px; margin-bottom:8px; line-height:1.55; }
+    .admin-issue-time { font-size:11px; color:var(--ink-faint); font-family:'JetBrains Mono',monospace; }
+
+    /* UPLOAD */
+    .upload-zone-wrapper { position:relative; }
+    .upload-zone { border:2px dashed var(--border-mid); border-radius:var(--radius-md); padding:40px 32px; text-align:center; transition:all var(--t); cursor:pointer; background:var(--cream); }
+    .upload-zone:hover, .upload-zone.drag-over { border-color:var(--amber); background:var(--amber-pale); }
+    .upload-zone-icon { font-size:36px; margin-bottom:14px; display:block; opacity:0.6; }
+    .upload-zone-text { font-size:14px; color:var(--ink-mid); font-weight:500; margin-bottom:4px; }
+    .upload-zone-hint { font-size:12px; color:var(--ink-faint); }
+    #fileInput { position:absolute; inset:0; width:100%; height:100%; opacity:0; cursor:pointer; z-index:2; }
+    .selected-file { display:flex; align-items:center; gap:14px; padding:14px 16px; background:var(--cream); border:1px solid var(--border-mid); border-radius:var(--radius-md); margin-top:14px; }
+    .selected-file-icon { font-size:22px; }
+    .selected-file-info { flex:1; }
+    .selected-file-name { font-weight:500; font-size:13px; word-break:break-all; color:var(--ink); }
+    .selected-file-size { font-size:12px; color:var(--ink-faint); font-family:'JetBrains Mono',monospace; }
+
+    /* FILE LIST */
+    .file-list { display:flex; flex-direction:column; gap:10px; }
+    .file-item { display:flex; align-items:center; gap:16px; padding:16px 18px; background:var(--cream); border:1px solid var(--border); border-radius:var(--radius-md); transition:all var(--t); }
+    .file-item:hover { border-color:var(--border-mid); background:var(--cream-deep); transform:translateX(2px); }
+    .file-icon { width:42px; height:42px; background:var(--ink); border-radius:var(--radius-sm); display:flex; align-items:center; justify-content:center; font-size:18px; flex-shrink:0; }
+    .file-info { flex:1; min-width:0; }
+    .file-name { font-weight:500; font-size:14px; margin-bottom:4px; word-break:break-all; color:var(--ink); }
+    .file-meta { display:flex; align-items:center; gap:12px; font-size:12px; color:var(--ink-faint); font-family:'JetBrains Mono',monospace; flex-wrap:wrap; }
+    .file-encrypted { display:inline-flex; align-items:center; gap:4px; color:var(--safe); font-family:'Sora',sans-serif; font-size:11px; font-weight:600; text-transform:uppercase; letter-spacing:0.06em; }
+    .file-actions { display:flex; gap:8px; flex-shrink:0; }
+    .empty-state { text-align:center; padding:56px 24px; color:var(--ink-light); }
+    .empty-state-icon { font-size:48px; margin-bottom:16px; opacity:0.3; }
+    .empty-state-title { font-family:'Playfair Display',serif; font-size:18px; font-weight:600; margin-bottom:6px; color:var(--ink-mid); }
+    .empty-state p:last-child { font-size:13px; color:var(--ink-faint); }
+    .section-divider { height:1px; background:linear-gradient(90deg,transparent,var(--border-mid),transparent); margin:8px 0 20px; }
+
+    /* FORMS */
+    .form-group { margin-bottom:18px; }
+    .form-label { display:flex; align-items:center; gap:8px; font-size:11px; font-weight:600; margin-bottom:8px; color:var(--ink); text-transform:uppercase; letter-spacing:0.07em; }
+    .form-hint { font-size:11px; color:var(--ink-faint); font-weight:400; text-transform:none; letter-spacing:0; }
+    .form-input { width:100%; padding:12px 14px; background:var(--cream); border:1px solid var(--border-mid); border-radius:var(--radius-md); color:var(--ink); font-size:14px; font-family:'Sora',sans-serif; transition:all var(--t); }
+    .form-input:focus { outline:none; border-color:var(--amber); box-shadow:0 0 0 3px var(--amber-glow); background:var(--paper); }
+    .form-input::placeholder { color:var(--ink-faint); }
+    .form-select { appearance:none; background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' fill='%236b6558' viewBox='0 0 16 16'%3E%3Cpath d='M8 11L3 6h10z'/%3E%3C/svg%3E"); background-repeat:no-repeat; background-position:right 14px center; padding-right:40px; }
+    .pw-wrap { position:relative; }
+    .pw-wrap .form-input { padding-right:44px; }
+    .pw-toggle { position:absolute; right:12px; top:50%; transform:translateY(-50%); background:none; border:none; cursor:pointer; color:var(--ink-faint); font-size:15px; padding:4px; transition:color var(--t); z-index:1; }
+    .pw-toggle:hover { color:var(--ink-mid); }
+    .strength-bar-wrap { margin-top:6px; height:3px; background:var(--cream-deep); border-radius:2px; overflow:hidden; }
+    .strength-bar { height:100%; width:0; border-radius:2px; transition:width 0.3s ease,background 0.3s ease; }
+    .form-actions { display:flex; gap:10px; margin-top:24px; }
+    .form-actions .btn { flex:1; }
+
+    /* STATUS */
+    .status-msg { display:none; padding:11px 15px; border-radius:var(--radius-md); font-size:13px; margin-top:14px; font-weight:500; animation:statusFade 0.18s ease; }
+    @keyframes statusFade { from{opacity:0;transform:translateY(-6px)} to{opacity:1;transform:translateY(0)} }
+    .status-msg.success { background:var(--safe-bg); border:1px solid rgba(46,125,82,0.22); color:var(--safe); }
+    .status-msg.error   { background:var(--danger-bg); border:1px solid rgba(181,61,46,0.22); color:var(--danger); }
+
+    /* MODAL */
+    .modal-overlay { display:none; position:fixed; inset:0; background:rgba(28,26,22,0.60); backdrop-filter:blur(6px); justify-content:center; align-items:center; z-index:1000; padding:24px; }
+    .modal-overlay.active { display:flex; }
+    .modal { background:var(--paper); border:1px solid var(--border-mid); border-radius:var(--radius-xl); padding:36px; max-width:440px; width:100%; box-shadow:var(--shadow-lg); animation:modalUp 0.22s cubic-bezier(0.34,1.56,0.64,1); position:relative; }
+    .modal::before { content:''; position:absolute; top:0; left:28px; right:28px; height:2px; background:linear-gradient(90deg,var(--amber),var(--amber-light)); border-radius:0 0 2px 2px; }
+    @keyframes modalUp { from{opacity:0;transform:translateY(18px) scale(0.97)} to{opacity:1;transform:translateY(0) scale(1)} }
+    .modal-header { display:flex; align-items:center; gap:14px; margin-bottom:28px; }
+    .modal-icon { width:46px; height:46px; background:var(--ink); border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:20px; flex-shrink:0; }
+    .modal-title { font-family:'Playfair Display',serif; font-size:20px; font-weight:600; color:var(--ink); line-height:1.2; margin-bottom:2px; }
+    .modal-subtitle { font-size:13px; color:var(--ink-light); }
+
+    /* UTIL */
+    .sr-only { position:absolute; width:1px; height:1px; padding:0; margin:-1px; overflow:hidden; clip:rect(0,0,0,0); border:0; }
+
+    @media (max-width:600px) {
+      body { padding:16px 14px 48px; }
+      .header { padding:22px 20px; }
+      .header-text h1 { font-size:18px; }
+      .card { padding:20px; }
+      .card-header { flex-direction:column; align-items:flex-start; }
+      .file-item { flex-direction:column; align-items:flex-start; gap:12px; }
+      .file-actions { width:100%; }
+      .file-actions .btn { flex:1; }
+      .form-actions { flex-direction:column; }
+      .modal { padding:28px 22px; }
+    }
+  </style>
+</head>
+<body>
+<div class="container">
+
+  <header class="header">
+    <div class="header-seal" aria-hidden="true">🔐</div>
+    <div class="header-text">
+      <h1>UniSafe Student Vault</h1>
+      <p>
+        <span class="badge">🛡 Ascon-AEAD128 Encrypted</span>
+        <span class="header-divider" aria-hidden="true">·</span>
+        <span>Admin Monitored &amp; Secure</span>
+      </p>
+    </div>
+  </header>
+
+  <div id="adminAlertContainer" role="alert" aria-live="polite"></div>
+
+  <!-- 01 Session -->
+  <section class="card" aria-labelledby="sessionHeading">
+    <div class="card-header">
+      <h2 class="card-title" id="sessionHeading">
+        <span class="card-title-num" aria-hidden="true">01</span>
+        <span class="card-title-label">Your Session</span>
+      </h2>
+      <button class="btn btn-primary" id="newSessionBtn">
+        <span aria-hidden="true">＋</span> New Session
+      </button>
+    </div>
+    <div id="sessionInfo">
+      <div class="session-empty">
+        <div class="session-empty-icon" aria-hidden="true">🔓</div>
+        <p>No active session</p>
+        <p>Click "New Session" to start encrypting your files</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- 02 Encrypt -->
+  <section class="card" id="encryptPanel" style="display:none;" aria-labelledby="encryptHeading">
+    <div class="card-header">
+      <h2 class="card-title" id="encryptHeading">
+        <span class="card-title-num" aria-hidden="true">02</span>
+        <span class="card-title-label">Encrypt &amp; Upload</span>
+      </h2>
+    </div>
+
+    <div class="upload-zone-wrapper">
+      <input type="file" id="fileInput" aria-label="Select file to encrypt">
+      <div class="upload-zone" id="uploadZone">
+        <span class="upload-zone-icon" aria-hidden="true">📁</span>
+        <p class="upload-zone-text">Click to select or drag a file here</p>
+        <p class="upload-zone-hint">Your file will be encrypted before storage</p>
+      </div>
+    </div>
+
+    <div id="selectedFileDisplay" style="display:none;"></div>
+
+    <div style="margin-top:20px;">
+      <div class="form-group">
+        <label class="form-label" for="encryptPassword">
+          Master Password
+          <span class="form-hint">— to encrypt this file</span>
+        </label>
+        <div class="pw-wrap">
+          <input type="password" id="encryptPassword" class="form-input" placeholder="Enter your master password" autocomplete="current-password">
+          <button type="button" class="pw-toggle" data-target="encryptPassword" aria-label="Show/hide password">👁</button>
+        </div>
+        <div class="strength-bar-wrap"><div class="strength-bar" id="encryptStrengthBar"></div></div>
+      </div>
+      <button class="btn btn-amber" id="encryptBtn" style="width:100%;">
+        <span aria-hidden="true">🔐</span> Encrypt &amp; Save File
+      </button>
+    </div>
+    <div id="encryptStatus" class="status-msg" role="status" aria-live="polite"></div>
+  </section>
+
+  <!-- 03 Files -->
+  <section class="card" id="filesPanel" style="display:none;" aria-labelledby="filesHeading">
+    <div class="card-header">
+      <h2 class="card-title" id="filesHeading">
+        <span class="card-title-num" aria-hidden="true">03</span>
+        <span class="card-title-label">Your Encrypted Files</span>
+      </h2>
+    </div>
+    <div class="section-divider" aria-hidden="true"></div>
+    <div id="fileListContainer" class="file-list" role="list"></div>
+  </section>
+
+</div>
+
+<!-- DECRYPT MODAL -->
+<div class="modal-overlay" id="decryptModal" role="dialog" aria-modal="true" aria-labelledby="decryptModalTitle">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-icon" aria-hidden="true">🔓</div>
+      <div>
+        <h3 class="modal-title" id="decryptModalTitle">Decrypt File</h3>
+        <p class="modal-subtitle" id="decryptFileLabel">Enter your password to decrypt and download</p>
+      </div>
+    </div>
+    <div class="form-group">
+      <label class="form-label" for="decryptPassword">Master Password</label>
+      <div class="pw-wrap">
+        <input type="password" id="decryptPassword" class="form-input" placeholder="Enter your password" autocomplete="current-password">
+        <button type="button" class="pw-toggle" data-target="decryptPassword" aria-label="Show/hide password">👁</button>
+      </div>
+    </div>
+    <div class="form-actions">
+      <button class="btn btn-ghost" id="cancelDecryptBtn">Cancel</button>
+      <button class="btn btn-amber" id="confirmDecryptBtn">
+        <span aria-hidden="true">🔓</span> Decrypt &amp; Download
+      </button>
+    </div>
+    <div id="decryptStatus" class="status-msg" role="status" aria-live="polite"></div>
+  </div>
+</div>
+
+<!-- SESSION MODAL -->
+<div class="modal-overlay" id="sessionModal" role="dialog" aria-modal="true" aria-labelledby="sessionModalTitle">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-icon" aria-hidden="true">🔐</div>
+      <div>
+        <h2 class="modal-title" id="sessionModalTitle">Create Secure Session</h2>
+        <p class="modal-subtitle">Set up your encrypted storage vault</p>
+      </div>
+    </div>
+    <div class="form-group">
+      <label class="form-label" for="newStudentName">Your Name</label>
+      <input type="text" id="newStudentName" class="form-input" placeholder="e.g. Alex Johnson" autocomplete="name">
+    </div>
+    <div class="form-group">
+      <label class="form-label" for="newMasterPass">
+        Master Password <span class="form-hint">(min 8 characters)</span>
+      </label>
+      <div class="pw-wrap">
+        <input type="password" id="newMasterPass" class="form-input" placeholder="Create a strong password" autocomplete="new-password">
+        <button type="button" class="pw-toggle" data-target="newMasterPass" aria-label="Show/hide password">👁</button>
+      </div>
+      <div class="strength-bar-wrap"><div class="strength-bar" id="newPassStrengthBar"></div></div>
+    </div>
+    <div class="form-group">
+      <label class="form-label" for="confirmMasterPass">Confirm Password</label>
+      <div class="pw-wrap">
+        <input type="password" id="confirmMasterPass" class="form-input" placeholder="Re-enter your password" autocomplete="new-password">
+        <button type="button" class="pw-toggle" data-target="confirmMasterPass" aria-label="Show/hide password">👁</button>
+      </div>
+    </div>
+    <div class="form-group">
+      <label class="form-label" for="storageSelect">Storage Backend</label>
+      <select id="storageSelect" class="form-input form-select">
+        <option value="indexeddb">IndexedDB (Recommended — Unlimited)</option>
+        <option value="localstorage">LocalStorage (Demo — 5 MB limit)</option>
+      </select>
+    </div>
+    <div id="sessionCreateError" class="status-msg"></div>
+    <div class="form-actions">
+      <button class="btn btn-ghost" id="cancelSessionBtn">Cancel</button>
+      <button class="btn btn-primary" id="confirmCreateSession">
+        <span aria-hidden="true">🚀</span> Create Session
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- DELETE CONFIRM MODAL -->
+<div class="modal-overlay" id="deleteModal" role="dialog" aria-modal="true" aria-labelledby="deleteModalTitle">
+  <div class="modal" style="max-width:380px;">
+    <div class="modal-header">
+      <div class="modal-icon" style="background:var(--danger);" aria-hidden="true">🗑️</div>
+      <div>
+        <h3 class="modal-title" id="deleteModalTitle">Delete File?</h3>
+        <p class="modal-subtitle" id="deleteFileLabel">This cannot be undone.</p>
+      </div>
+    </div>
+    <div class="form-actions">
+      <button class="btn btn-ghost" id="cancelDeleteBtn">Cancel</button>
+      <button class="btn btn-danger" id="confirmDeleteBtn">Delete Permanently</button>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ══════════════════════════════════════
+   DB CORE
+══════════════════════════════════════ */
+class UniSafeCore {
+  constructor() { this.dbName='UniSafeDB'; this.dbVersion=2; this.db=null; }
+
+  async initDB() {
+    return new Promise((res,rej) => {
+      const req = indexedDB.open(this.dbName, this.dbVersion);
+      req.onerror = () => rej(req.error);
+      req.onsuccess = () => { this.db = req.result; res(); };
+      req.onupgradeneeded = (e) => {
+        const db = e.target.result;
+        ['sessions','files','activities','admin_issues'].forEach(s => {
+          if (!db.objectStoreNames.contains(s))
+            db.createObjectStore(s, s === 'activities' || s === 'admin_issues'
+              ? { keyPath:'id', autoIncrement:true } : { keyPath:'id' });
+        });
+      };
+    });
+  }
+
+  _store(name, mode='readonly') { return this.db.transaction(name, mode).objectStore(name); }
+
+  put(store, data) { return new Promise((res,rej)=>{ const r=this._store(store,'readwrite').put(data); r.onsuccess=res; r.onerror=rej; }); }
+  get(store, key)  { return new Promise((res,rej)=>{ const r=this._store(store).get(key); r.onsuccess=()=>res(r.result); r.onerror=rej; }); }
+  getAll(store)    { return new Promise((res,rej)=>{ const r=this._store(store).getAll(); r.onsuccess=()=>res(r.result||[]); r.onerror=rej; }); }
+  del(store, key)  { return new Promise((res,rej)=>{ const r=this._store(store,'readwrite').delete(key); r.onsuccess=res; r.onerror=rej; }); }
+
+  saveSession(s)     { return this.put('sessions', s); }
+  getSession(id)     { return this.get('sessions', id); }
+  saveFile(f)        { return this.put('files', f); }
+  getAllFiles()       { return this.getAll('files'); }
+  deleteFile(id)     { return this.del('files', id); }
+  log(act)           { return this.put('activities', {...act, ts: Date.now(), id: Date.now()+Math.random()}); }
+  addIssue(i)        { return this.put('admin_issues', {...i, createdAt: new Date().toISOString(), resolved:false}); }
+
+  async getActiveIssues(sessionId) {
+    const all = await this.getAll('admin_issues');
+    return all.filter(i => i.sessionId===sessionId && !i.resolved);
+  }
+}
+
+/* ══════════════════════════════════════
+   CRYPTO  (AES-GCM / PBKDF2)
+══════════════════════════════════════ */
+class AsconCrypto {
+  async _key(password, salt) {
+    const enc = new TextEncoder();
+    const km  = await crypto.subtle.importKey('raw', enc.encode(password), 'PBKDF2', false, ['deriveKey']);
+    return crypto.subtle.deriveKey(
+      { name:'PBKDF2', salt, iterations:100000, hash:'SHA-256' },
+      km, { name:'AES-GCM', length:128 }, false, ['encrypt','decrypt']
+    );
+  }
+
+  async encrypt(data, password) {
+    const salt = crypto.getRandomValues(new Uint8Array(16));
+    const iv   = crypto.getRandomValues(new Uint8Array(12));
+    const key  = await this._key(password, salt);
+    const enc  = await crypto.subtle.encrypt({ name:'AES-GCM', iv }, key, data);
+    const out  = new Uint8Array(28 + enc.byteLength);
+    out.set(salt, 0); out.set(iv, 16); out.set(new Uint8Array(enc), 28);
+    return out.buffer;
+  }
+
+  async decrypt(buf, password) {
+    const d    = new Uint8Array(buf);
+    const salt = d.slice(0,16), iv = d.slice(16,28), ct = d.slice(28);
+    const key  = await this._key(password, salt);
+    try { return await crypto.subtle.decrypt({ name:'AES-GCM', iv }, key, ct); }
+    catch { throw new Error('Wrong password or corrupted file'); }
+  }
+}
+
+/* ══════════════════════════════════════
+   STATE
+══════════════════════════════════════ */
+const core   = new UniSafeCore();
+const crypto_= new AsconCrypto();
+let session  = null;
+let files    = [];
+let pendDec  = null;
+let pendDel  = null;
+
+/* ══════════════════════════════════════
+   HELPERS
+══════════════════════════════════════ */
+const esc = s => String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+
+function fmtSize(b) {
+  if (b<1024) return b+' B';
+  if (b<1048576) return (b/1024).toFixed(1)+' KB';
+  return (b/1048576).toFixed(1)+' MB';
+}
+
+function fileIcon(t) {
+  if (t?.startsWith('image/')) return '🖼️';
+  if (t?.startsWith('video/')) return '🎬';
+  if (t?.startsWith('audio/')) return '🎵';
+  if (t?.includes('pdf'))      return '📄';
+  if (t?.includes('zip')||t?.includes('rar')) return '📦';
+  if (t?.includes('text')||t?.includes('document')) return '📝';
+  return '📄';
+}
+
+function showSt(el, msg, type) {
+  el.textContent = msg; el.className = 'status-msg '+type; el.style.display='block';
+  clearTimeout(el._t); el._t = setTimeout(()=>el.style.display='none', 5000);
+}
+
+function openM(id)  { document.getElementById(id).classList.add('active'); }
+function closeM(id) { document.getElementById(id).classList.remove('active'); }
+
+function strength(val, barId) {
+  let s=0;
+  if(val.length>=8) s++; if(val.length>=12) s++;
+  if(/[A-Z]/.test(val)) s++; if(/[0-9]/.test(val)) s++; if(/[^A-Za-z0-9]/.test(val)) s++;
+  const bar = document.getElementById(barId);
+  if (!bar) return;
+  bar.style.width = Math.min(s/5*100,100)+'%';
+  bar.style.background = s<=1?'#b53d2e':s<=3?'#c8820a':'#2e7d52';
+}
+
+/* pw toggle via data-target */
+document.querySelectorAll('.pw-toggle').forEach(btn => {
+  btn.addEventListener('click', () => {
+    const inp = document.getElementById(btn.dataset.target);
+    if (!inp) return;
+    inp.type = inp.type==='password' ? 'text' : 'password';
+    btn.textContent = inp.type==='password' ? '👁' : '🙈';
+  });
+});
+
+/* close modals on backdrop click or Escape */
+['decryptModal','sessionModal','deleteModal'].forEach(id => {
+  document.getElementById(id).addEventListener('click', e => { if(e.target.id===id) closeM(id); });
+});
+document.addEventListener('keydown', e => {
+  if (e.key==='Escape') ['decryptModal','sessionModal','deleteModal'].forEach(closeM);
+});
+
+/* ══════════════════════════════════════
+   UPLOAD ZONE
+══════════════════════════════════════ */
+const fileInput_     = document.getElementById('fileInput');
+const uploadZone_    = document.getElementById('uploadZone');
+const selectedDisp   = document.getElementById('selectedFileDisplay');
+
+uploadZone_.addEventListener('dragover',  e => { e.preventDefault(); uploadZone_.classList.add('drag-over'); });
+uploadZone_.addEventListener('dragleave', ()  => uploadZone_.classList.remove('drag-over'));
+uploadZone_.addEventListener('drop', e => {
+  e.preventDefault(); uploadZone_.classList.remove('drag-over');
+  if (e.dataTransfer.files[0]) {
+    const dt = new DataTransfer(); dt.items.add(e.dataTransfer.files[0]);
+    fileInput_.files = dt.files; refreshSelectedFile();
+  }
+});
+fileInput_.addEventListener('change', refreshSelectedFile);
+
+function refreshSelectedFile() {
+  const f = fileInput_.files[0];
+  if (!f) { selectedDisp.style.display='none'; return; }
+  selectedDisp.style.display='block';
+  selectedDisp.innerHTML = `
+    <div class="selected-file">
+      <span class="selected-file-icon" aria-hidden="true">${fileIcon(f.type)}</span>
+      <div class="selected-file-info">
+        <div class="selected-file-name">${esc(f.name)}</div>
+        <div class="selected-file-size">${fmtSize(f.size)}</div>
+      </div>
+      <button class="btn btn-icon btn-ghost" id="clearFile" aria-label="Remove file">✕</button>
+    </div>`;
+  document.getElementById('clearFile').onclick = () => { fileInput_.value=''; selectedDisp.style.display='none'; };
+}
+
+/* ══════════════════════════════════════
+   ENCRYPT
+══════════════════════════════════════ */
+document.getElementById('encryptPassword').addEventListener('input', e => strength(e.target.value,'encryptStrengthBar'));
+document.getElementById('newMasterPass').addEventListener('input', e => strength(e.target.value,'newPassStrengthBar'));
+
+document.getElementById('encryptBtn').addEventListener('click', async () => {
+  const stEl = document.getElementById('encryptStatus');
+  if (!session) { showSt(stEl,'⚠ No active session — create one first.','error'); return; }
+
+  const f   = fileInput_.files[0];
+  const pw  = document.getElementById('encryptPassword').value.trim();
+
+  if (!f)  { showSt(stEl,'⚠ Please select a file first.','error'); return; }
+  if (!pw) { showSt(stEl,'⚠ Enter your master password.','error'); document.getElementById('encryptPassword').focus(); return; }
+
+  const btn = document.getElementById('encryptBtn');
+  btn.disabled=true; btn.innerHTML='<span aria-hidden="true">⏳</span> Encrypting…';
+
+  try {
+    const buf   = await f.arrayBuffer();
+    const enc   = await crypto_.encrypt(buf, pw);
+    const fid   = 'file_'+Date.now()+'_'+Math.random().toString(36).substr(2,8);
+    await core.saveFile({ id:fid, sessionId:session.id, name:f.name, type:f.type, size:f.size, encryptedData:Array.from(new Uint8Array(enc)), createdAt:new Date().toISOString() });
+    await core.log({ type:'encrypt', sessionId:session.id, name:f.name });
+    await renderFiles();
+    showSt(stEl,'✓ Encrypted & saved: '+f.name,'success');
+    fileInput_.value=''; selectedDisp.style.display='none';
+    document.getElementById('encryptPassword').value='';
+    document.getElementById('encryptStrengthBar').style.width='0';
+  } catch(e) {
+    showSt(stEl,'✗ '+e.message,'error');
+  } finally {
+    btn.disabled=false; btn.innerHTML='<span aria-hidden="true">🔐</span> Encrypt &amp; Save File';
+  }
+});
+
+/* ══════════════════════════════════════
+   DECRYPT
+══════════════════════════════════════ */
+function openDecrypt(fileId) {
+  pendDec = fileId;
+  const f = files.find(x=>x.id===fileId);
+  document.getElementById('decryptFileLabel').textContent = f ? 'File: '+f.name : 'Enter your password to decrypt';
+  document.getElementById('decryptPassword').value='';
+  document.getElementById('decryptStatus').style.display='none';
+  openM('decryptModal');
+  setTimeout(()=>document.getElementById('decryptPassword').focus(), 80);
+}
+
+document.getElementById('cancelDecryptBtn').addEventListener('click', ()=>closeM('decryptModal'));
+document.getElementById('decryptPassword').addEventListener('keydown', e=>{ if(e.key==='Enter') document.getElementById('confirmDecryptBtn').click(); });
+
+document.getElementById('confirmDecryptBtn').addEventListener('click', async () => {
+  const pw  = document.getElementById('decryptPassword').value;
+  const rec = files.find(x=>x.id===pendDec);
+  const stEl= document.getElementById('decryptStatus');
+
+  if (!pw)  { showSt(stEl,'⚠ Please enter your password.','error'); return; }
+  if (!rec) { showSt(stEl,'✗ File not found.','error'); return; }
+
+  const btn = document.getElementById('confirmDecryptBtn');
+  btn.disabled=true; btn.innerHTML='<span aria-hidden="true">⏳</span> Decrypting…';
+
+  try {
+    const buf  = new Uint8Array(rec.encryptedData).buffer;
+    const dec  = await crypto_.decrypt(buf, pw);
+    const blob = new Blob([dec], { type: rec.type||'application/octet-stream' });
+    const url  = URL.createObjectURL(blob);
+    const a    = Object.assign(document.createElement('a'), { href:url, download: rec.name.replace(/\.encrypted$/,'')||'file' });
+    document.body.appendChild(a); a.click(); document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    await core.log({ type:'decrypt', sessionId:session.id, name:rec.name });
+    showSt(stEl,'✓ Decrypted — downloading now!','success');
+    setTimeout(()=>closeM('decryptModal'), 1600);
+  } catch(e) {
+    showSt(stEl,'✗ '+e.message,'error');
+    await core.log({ type:'decrypt_fail', sessionId:session.id, error:e.message });
+  } finally {
+    btn.disabled=false; btn.innerHTML='<span aria-hidden="true">🔓</span> Decrypt &amp; Download';
+  }
+});
+
+/* ══════════════════════════════════════
+   DELETE
+══════════════════════════════════════ */
+function openDelete(fileId) {
+  pendDel = fileId;
+  const f = files.find(x=>x.id===fileId);
+  document.getElementById('deleteFileLabel').textContent = f ? '"'+f.name+'" will be permanently removed.' : 'This cannot be undone.';
+  openM('deleteModal');
+}
+document.getElementById('cancelDeleteBtn').addEventListener('click', ()=>closeM('deleteModal'));
+document.getElementById('confirmDeleteBtn').addEventListener('click', async () => {
+  if (!pendDel) return;
+  const f = files.find(x=>x.id===pendDel);
+  await core.deleteFile(pendDel);
+  await core.log({ type:'delete', sessionId:session.id, name:f?.name });
+  closeM('deleteModal'); pendDel=null;
+  await renderFiles();
+  showSt(document.getElementById('encryptStatus'),'✓ File deleted.','success');
+});
+
+/* ══════════════════════════════════════
+   FILE LIST
+══════════════════════════════════════ */
+async function renderFiles() {
+  if (!session) return;
+  const all = await core.getAllFiles();
+  files = all.filter(f=>f.sessionId===session.id);
+  const c = document.getElementById('fileListContainer');
+
+  if (!files.length) {
+    c.innerHTML=`<div class="empty-state"><div class="empty-state-icon" aria-hidden="true">📭</div><p class="empty-state-title">Vault is empty</p><p>Upload your first file above to get started</p></div>`;
+    return;
+  }
+
+  c.innerHTML = files.map(f=>`
+    <div class="file-item" role="listitem">
+      <div class="file-icon" aria-hidden="true">${fileIcon(f.type)}</div>
+      <div class="file-info">
+        <div class="file-name">${esc(f.name)}</div>
+        <div class="file-meta">
+          <span>${fmtSize(f.size)}</span>
+          <span class="file-encrypted"><span aria-hidden="true">🔒</span> Encrypted</span>
+          <span>${new Date(f.createdAt).toLocaleDateString()}</span>
+        </div>
+      </div>
+      <div class="file-actions">
+        <button class="btn btn-sm btn-amber" data-dec="${f.id}" aria-label="Decrypt ${esc(f.name)}">
+          <span aria-hidden="true">🔓</span> Decrypt
+        </button>
+        <button class="btn btn-sm btn-danger btn-icon" data-del="${f.id}" aria-label="Delete ${esc(f.name)}">🗑️</button>
+      </div>
+    </div>`).join('');
+
+  c.querySelectorAll('[data-dec]').forEach(b=>b.addEventListener('click',()=>openDecrypt(b.dataset.dec)));
+  c.querySelectorAll('[data-del]').forEach(b=>b.addEventListener('click',()=>openDelete(b.dataset.del)));
+}
+
+/* ══════════════════════════════════════
+   ADMIN WARNINGS
+══════════════════════════════════════ */
+async function pollWarnings() {
+  if (!session) return;
+  const issues = await core.getActiveIssues(session.id);
+  const c = document.getElementById('adminAlertContainer');
+  if (!issues.length) { c.innerHTML=''; return; }
+  c.innerHTML = `
+    <div class="warning-banner">
+      <span class="warning-banner-icon" aria-hidden="true">⚠️</span>
+      <div class="warning-banner-content">
+        <div class="warning-banner-title">Admin Notice</div>
+        <div class="warning-banner-text">You have ${issues.length} active issue(s) requiring attention</div>
+      </div>
+    </div>`
+  + issues.map(i=>`
+    <div class="admin-issue">
+      <div class="admin-issue-header"><span aria-hidden="true">📢</span> Message from Admin</div>
+      <div class="admin-issue-text">${esc(i.message)}</div>
+      <div class="admin-issue-time">${new Date(i.createdAt).toLocaleString()}</div>
+    </div>`).join('');
+}
+
+/* ══════════════════════════════════════
+   SESSION UI
+══════════════════════════════════════ */
+async function loadSession(id) {
+  const s = await core.getSession(id);
+  if (!s) return false;
+  session = s;
+  const initials = s.name.split(' ').map(n=>n[0]).join('').toUpperCase().slice(0,2);
+  document.getElementById('sessionInfo').innerHTML=`
+    <div class="session-info">
+      <div class="session-avatar" aria-hidden="true">${esc(initials)}</div>
+      <div class="session-details">
+        <div class="session-name">${esc(s.name)}</div>
+        <div class="session-id">ID: ${s.id.substr(0,14)}…</div>
+      </div>
+      <span class="badge">● Active</span>
+      <button class="btn btn-ghost btn-sm" id="switchBtn"><span aria-hidden="true">🚪</span> Switch</button>
+    </div>`;
+  document.getElementById('switchBtn').addEventListener('click', doSwitch);
+  document.getElementById('encryptPanel').style.display='block';
+  document.getElementById('filesPanel').style.display='block';
+  await renderFiles();
+  await pollWarnings();
+  return true;
+}
+
+function emptySessionUI() {
+  session=null;
+  document.getElementById('sessionInfo').innerHTML=`
+    <div class="session-empty">
+      <div class="session-empty-icon" aria-hidden="true">🔓</div>
+      <p>No active session</p>
+      <p>Click "New Session" to start encrypting your files</p>
+    </div>`;
+  document.getElementById('encryptPanel').style.display='none';
+  document.getElementById('filesPanel').style.display='none';
+  document.getElementById('adminAlertContainer').innerHTML='';
+}
+
+function doSwitch() { localStorage.removeItem('unisafe_current_session'); emptySessionUI(); }
+
+/* ── New session modal ── */
+document.getElementById('newSessionBtn').addEventListener('click', ()=>{
+  ['newStudentName','newMasterPass','confirmMasterPass'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('newPassStrengthBar').style.width='0';
+  document.getElementById('sessionCreateError').style.display='none';
+  openM('sessionModal');
+  setTimeout(()=>document.getElementById('newStudentName').focus(),80);
+});
+document.getElementById('cancelSessionBtn').addEventListener('click',()=>closeM('sessionModal'));
+
+document.getElementById('confirmCreateSession').addEventListener('click', async ()=>{
+  const name = document.getElementById('newStudentName').value.trim();
+  const pw   = document.getElementById('newMasterPass').value;
+  const pw2  = document.getElementById('confirmMasterPass').value;
+  const stor = document.getElementById('storageSelect').value;
+  const errEl= document.getElementById('sessionCreateError');
+
+  if (!name)        return showSt(errEl,'⚠ Please enter your name.','error');
+  if (pw.length<8)  return showSt(errEl,'⚠ Password must be at least 8 characters.','error');
+  if (pw!==pw2)     return showSt(errEl,'⚠ Passwords do not match.','error');
+
+  const sid = 'session_'+Date.now()+'_'+Math.random().toString(36).substr(2,10);
+  const ns  = { id:sid, name, storageType:stor, created:new Date().toISOString(), lastActive:new Date().toISOString() };
+  await core.saveSession(ns);
+  localStorage.setItem('unisafe_storage_type', stor);
+  localStorage.setItem('unisafe_current_session', sid);
+  await core.log({ type:'session_created', sessionId:sid, name });
+  closeM('sessionModal');
+  await loadSession(sid);
+});
+
+['newStudentName','newMasterPass','confirmMasterPass'].forEach(id=>{
+  document.getElementById(id).addEventListener('keydown', e=>{ if(e.key==='Enter') document.getElementById('confirmCreateSession').click(); });
+});
+
+/* ══════════════════════════════════════
+   INIT
+══════════════════════════════════════ */
+(async () => {
+  await core.initDB();
+  const stored = localStorage.getItem('unisafe_current_session');
+  if (stored) {
+    const ok = await loadSession(stored);
+    if (!ok) { localStorage.removeItem('unisafe_current_session'); emptySessionUI(); }
+  } else {
+    emptySessionUI();
+  }
+  setInterval(()=>{ if(session) pollWarnings(); }, 8000);
+})();
+</script>
+<<script>
+  if ("serviceWorker" in navigator) {
+    window.addEventListener("load", () => {
+      navigator.serviceWorker.register("./sw.js").catch(console.error);
+    });
+  }
+</script>
+</body>
+</html>

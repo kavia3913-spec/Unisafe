@@ -1,0 +1,671 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+ <link rel="manifest" href="./manifest.json">
+<meta name="theme-color" content="#1c1a16">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>UniSafe Admin | Monitor &amp; Control</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=Sora:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
+    :root {
+      --cream:#f5f0e8; --cream-deep:#ece6d9; --paper:#faf8f4;
+      --ink:#1c1a16; --ink-mid:#3d3a33; --ink-light:#6b6558; --ink-faint:#9e9889;
+      --amber:#c8820a; --amber-light:#e8a020; --amber-glow:rgba(200,130,10,0.12); --amber-pale:rgba(200,130,10,0.06);
+      --danger:#b53d2e; --danger-bg:rgba(181,61,46,0.08);
+      --warning:#b86b00; --warning-bg:rgba(184,107,0,0.08);
+      --safe:#2e7d52; --safe-bg:rgba(46,125,82,0.08);
+      --border:rgba(28,26,22,0.12); --border-mid:rgba(28,26,22,0.20);
+      --shadow-sm:0 1px 4px rgba(28,26,22,0.08); --shadow-md:0 4px 16px rgba(28,26,22,0.10); --shadow-lg:0 12px 40px rgba(28,26,22,0.14);
+      --radius-sm:6px; --radius-md:10px; --radius-lg:16px; --radius-xl:22px; --t:0.18s ease;
+    }
+    html { font-size:16px; }
+    body {
+      font-family:'Sora',sans-serif; background:var(--cream); color:var(--ink);
+      min-height:100vh; padding:32px 20px 64px; line-height:1.6;
+      background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='200' height='200' filter='url(%23noise)' opacity='0.03'/%3E%3C/svg%3E");
+    }
+    .container { max-width:1100px; margin:0 auto; }
+
+    /* HEADER */
+    .header { display:flex; justify-content:space-between; align-items:center; gap:20px; padding:28px 32px; background:var(--paper); border:1px solid var(--border-mid); border-radius:var(--radius-xl); margin-bottom:28px; box-shadow:var(--shadow-md); position:relative; overflow:hidden; flex-wrap:wrap; }
+    .header::before { content:''; position:absolute; top:0; left:0; right:0; height:3px; background:linear-gradient(90deg,var(--danger) 0%,var(--amber) 60%,transparent 100%); }
+    .header-left { display:flex; align-items:center; gap:18px; }
+    .header-seal { width:56px; height:56px; border:2px solid var(--danger); border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:24px; background:rgba(181,61,46,0.06); flex-shrink:0; position:relative; }
+    .header-seal::after { content:''; position:absolute; inset:3px; border:1px dashed rgba(181,61,46,0.25); border-radius:50%; }
+    .header-text h1 { font-family:'Playfair Display',serif; font-size:22px; font-weight:700; letter-spacing:-0.3px; color:var(--ink); margin-bottom:4px; }
+    .header-text p { font-size:12px; color:var(--ink-light); }
+
+    /* BADGES */
+    .badge { display:inline-flex; align-items:center; gap:5px; padding:3px 10px; background:var(--amber-glow); color:var(--amber); border:1px solid rgba(200,130,10,0.25); border-radius:20px; font-size:11px; font-weight:600; font-family:'JetBrains Mono',monospace; letter-spacing:0.02em; }
+    .badge-danger { background:rgba(181,61,46,0.08); color:var(--danger); border-color:rgba(181,61,46,0.22); }
+    .badge-safe { background:var(--safe-bg); color:var(--safe); border-color:rgba(46,125,82,0.22); }
+
+    /* STATS */
+    .stats-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(200px,1fr)); gap:16px; margin-bottom:24px; }
+    .stat-card { background:var(--paper); border:1px solid var(--border); border-radius:var(--radius-lg); padding:22px 24px; box-shadow:var(--shadow-sm); position:relative; overflow:hidden; transition:box-shadow var(--t); }
+    .stat-card:hover { box-shadow:var(--shadow-md); }
+    .stat-card::before { content:''; position:absolute; left:0; top:0; bottom:0; width:3px; }
+    .stat-card.blue::before  { background:#3b82f6; }
+    .stat-card.amber::before { background:var(--amber); }
+    .stat-card.red::before   { background:var(--danger); }
+    .stat-label { font-size:11px; font-weight:600; text-transform:uppercase; letter-spacing:0.08em; color:var(--ink-light); margin-bottom:8px; }
+    .stat-value { font-family:'Playfair Display',serif; font-size:32px; font-weight:700; color:var(--ink); line-height:1; }
+
+    /* CARDS */
+    .card { background:var(--paper); border:1px solid var(--border); border-radius:var(--radius-lg); padding:28px 32px; margin-bottom:20px; box-shadow:var(--shadow-sm); transition:box-shadow var(--t); }
+    .card:hover { box-shadow:var(--shadow-md); }
+    .card-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:20px; flex-wrap:wrap; gap:12px; }
+    .card-title { display:flex; align-items:center; gap:12px; }
+    .card-title-label { font-family:'Playfair Display',serif; font-size:17px; font-weight:600; color:var(--ink); letter-spacing:-0.2px; }
+    .card-title-num { display:inline-flex; align-items:center; justify-content:center; width:26px; height:26px; background:var(--cream-deep); border:1px solid var(--border-mid); border-radius:50%; font-size:11px; font-weight:600; color:var(--ink-light); font-family:'JetBrains Mono',monospace; }
+    .section-divider { height:1px; background:linear-gradient(90deg,transparent,var(--border-mid),transparent); margin:4px 0 20px; }
+
+    /* SEARCH */
+    .search-input { padding:9px 14px; background:var(--cream); border:1px solid var(--border-mid); border-radius:var(--radius-md); color:var(--ink); font-size:13px; font-family:'Sora',sans-serif; width:240px; transition:all var(--t); }
+    .search-input:focus { outline:none; border-color:var(--amber); box-shadow:0 0 0 3px var(--amber-glow); background:var(--paper); }
+    .search-input::placeholder { color:var(--ink-faint); }
+
+    /* STUDENT ROWS */
+    .student-row { display:flex; justify-content:space-between; align-items:center; gap:14px; padding:18px 20px; background:var(--cream); border:1px solid var(--border); border-radius:var(--radius-md); margin-bottom:10px; transition:all var(--t); flex-wrap:wrap; }
+    .student-row:hover { border-color:var(--border-mid); background:var(--cream-deep); transform:translateX(2px); }
+    .student-ident { display:flex; align-items:center; gap:12px; }
+    .student-avatar { width:40px; height:40px; background:var(--ink); border-radius:50%; display:flex; align-items:center; justify-content:center; font-family:'Playfair Display',serif; font-size:15px; font-weight:700; color:var(--cream); flex-shrink:0; }
+    .student-name { font-weight:600; font-size:15px; color:var(--ink); margin-bottom:3px; }
+    .student-id { font-family:'JetBrains Mono',monospace; font-size:11px; color:var(--ink-faint); }
+    .student-meta { font-size:12px; color:var(--ink-light); font-family:'JetBrains Mono',monospace; display:flex; flex-direction:column; gap:4px; }
+    .student-actions { display:flex; gap:8px; flex-wrap:wrap; align-items:center; }
+
+    /* BUTTONS */
+    .btn { display:inline-flex; align-items:center; justify-content:center; gap:6px; padding:9px 16px; border-radius:var(--radius-md); font-size:13px; font-weight:600; font-family:'Sora',sans-serif; cursor:pointer; transition:all var(--t); border:1px solid transparent; letter-spacing:0.01em; user-select:none; }
+    .btn:focus-visible { outline:2px solid var(--amber); outline-offset:2px; }
+    .btn:disabled { opacity:0.6; cursor:not-allowed; transform:none !important; }
+    .btn-primary { background:var(--ink); color:var(--cream); border-color:var(--ink); }
+    .btn-primary:hover:not(:disabled) { background:var(--ink-mid); transform:translateY(-1px); box-shadow:0 4px 12px rgba(28,26,22,0.2); }
+    .btn-amber { background:var(--amber); color:#fff; border-color:var(--amber); }
+    .btn-amber:hover:not(:disabled) { background:#b37309; transform:translateY(-1px); box-shadow:0 4px 12px rgba(200,130,10,0.25); }
+    .btn-ghost { background:transparent; border-color:var(--border-mid); color:var(--ink-mid); }
+    .btn-ghost:hover:not(:disabled) { background:var(--cream-deep); }
+    .btn-warning { background:transparent; border-color:rgba(184,107,0,0.3); color:var(--warning); }
+    .btn-warning:hover:not(:disabled) { background:var(--warning-bg); }
+    .btn-danger { background:transparent; border-color:rgba(181,61,46,0.3); color:var(--danger); }
+    .btn-danger:hover:not(:disabled) { background:var(--danger-bg); }
+    .btn-sm { padding:7px 12px; font-size:12px; }
+
+    /* LOGIN LOCKED */
+    .login-prompt { text-align:center; padding:64px 24px; }
+    .login-prompt-icon { font-size:52px; opacity:0.3; margin-bottom:16px; }
+    .login-prompt-title { font-family:'Playfair Display',serif; font-size:20px; color:var(--ink-mid); margin-bottom:6px; }
+    .login-prompt-text { font-size:13px; color:var(--ink-faint); }
+
+    /* ISSUES */
+    .issue-item { padding:16px 18px; background:#fffbf0; border:1px solid rgba(200,130,10,0.20); border-left:3px solid var(--amber); border-radius:var(--radius-md); margin-bottom:10px; }
+    .issue-item-header { display:flex; justify-content:space-between; align-items:flex-start; gap:10px; margin-bottom:8px; flex-wrap:wrap; }
+    .issue-student-id { font-family:'JetBrains Mono',monospace; font-size:11px; color:var(--amber); font-weight:500; }
+    .issue-time { font-family:'JetBrains Mono',monospace; font-size:11px; color:var(--ink-faint); }
+    .issue-message { font-size:14px; color:var(--ink-mid); margin-bottom:12px; line-height:1.55; }
+    .no-issues { text-align:center; padding:36px 24px; color:var(--ink-faint); font-size:13px; }
+    .no-issues-icon { font-size:36px; opacity:0.3; margin-bottom:10px; }
+
+    /* MODAL */
+    .modal-overlay { display:none; position:fixed; inset:0; background:rgba(28,26,22,0.60); backdrop-filter:blur(6px); justify-content:center; align-items:center; z-index:1000; padding:24px; }
+    .modal-overlay.active { display:flex; }
+    .modal { background:var(--paper); border:1px solid var(--border-mid); border-radius:var(--radius-xl); padding:36px; max-width:480px; width:100%; box-shadow:var(--shadow-lg); animation:modalUp 0.22s cubic-bezier(0.34,1.56,0.64,1); position:relative; }
+    .modal::before { content:''; position:absolute; top:0; left:28px; right:28px; height:2px; background:linear-gradient(90deg,var(--danger),var(--amber)); border-radius:0 0 2px 2px; }
+    @keyframes modalUp { from{opacity:0;transform:translateY(18px) scale(0.97)} to{opacity:1;transform:translateY(0) scale(1)} }
+    .modal-header { display:flex; align-items:center; gap:14px; margin-bottom:28px; }
+    .modal-icon { width:46px; height:46px; background:var(--ink); border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:20px; flex-shrink:0; }
+    .modal-title { font-family:'Playfair Display',serif; font-size:20px; font-weight:600; color:var(--ink); line-height:1.2; margin-bottom:2px; }
+    .modal-subtitle { font-size:13px; color:var(--ink-light); }
+
+    /* FORMS */
+    .form-group { margin-bottom:18px; }
+    .form-label { display:block; font-size:11px; font-weight:600; margin-bottom:8px; color:var(--ink); text-transform:uppercase; letter-spacing:0.08em; }
+    .form-input { width:100%; padding:12px 14px; background:var(--cream); border:1px solid var(--border-mid); border-radius:var(--radius-md); color:var(--ink); font-size:14px; font-family:'Sora',sans-serif; transition:all var(--t); }
+    .form-input:focus { outline:none; border-color:var(--amber); box-shadow:0 0 0 3px var(--amber-glow); background:var(--paper); }
+    .form-input::placeholder { color:var(--ink-faint); }
+    .form-textarea { resize:vertical; min-height:90px; }
+    .form-input[readonly] { background:var(--cream-deep); color:var(--ink-light); cursor:default; font-family:'JetBrains Mono',monospace; font-size:12px; }
+    .form-actions { display:flex; gap:10px; margin-top:24px; justify-content:flex-end; }
+
+    /* FILES MODAL LIST */
+    .file-list-modal { display:flex; flex-direction:column; gap:8px; max-height:280px; overflow-y:auto; margin-top:4px; }
+    .file-row-modal { display:flex; align-items:center; gap:12px; padding:12px 14px; background:var(--cream); border:1px solid var(--border); border-radius:var(--radius-md); }
+    .file-row-modal .file-info { flex:1; min-width:0; }
+    .file-row-modal .file-name { font-weight:500; font-size:13px; word-break:break-all; color:var(--ink); margin-bottom:2px; }
+    .file-row-modal .file-size { font-size:11px; color:var(--ink-faint); font-family:'JetBrains Mono',monospace; }
+    .file-row-modal .file-enc { font-size:11px; color:var(--safe); font-weight:600; text-transform:uppercase; letter-spacing:0.06em; }
+
+    /* STATUS */
+    .status-msg { display:none; padding:11px 15px; border-radius:var(--radius-md); font-size:13px; margin-top:14px; font-weight:500; animation:statusFade 0.18s ease; }
+    @keyframes statusFade { from{opacity:0;transform:translateY(-6px)} to{opacity:1;transform:translateY(0)} }
+    .status-msg.success { background:var(--safe-bg); border:1px solid rgba(46,125,82,0.22); color:var(--safe); }
+    .status-msg.error { background:var(--danger-bg); border:1px solid rgba(181,61,46,0.22); color:var(--danger); }
+
+    /* LOGIN MODAL */
+    #loginModal .modal::before { background:linear-gradient(90deg,var(--amber),var(--amber-light)); }
+    .pw-wrap { position:relative; }
+    .pw-wrap .form-input { padding-right:44px; }
+    .pw-toggle { position:absolute; right:12px; top:50%; transform:translateY(-50%); background:none; border:none; cursor:pointer; color:var(--ink-faint); font-size:15px; padding:4px; }
+    .pw-toggle:hover { color:var(--ink-mid); }
+
+    @media (max-width:700px) {
+      body { padding:16px 14px 48px; }
+      .header { padding:22px 20px; }
+      .header-text h1 { font-size:18px; }
+      .card { padding:20px; }
+      .student-row { flex-direction:column; align-items:flex-start; }
+      .student-actions { width:100%; }
+      .student-actions .btn { flex:1; justify-content:center; }
+      .form-actions { flex-direction:column-reverse; }
+      .form-actions .btn { width:100%; }
+      .search-input { width:100%; }
+    }
+  </style>
+</head>
+<body>
+<div class="container">
+
+  <header class="header">
+    <div class="header-left">
+      <div class="header-seal" aria-hidden="true">🛡️</div>
+      <div class="header-text">
+        <h1>UniSafe Admin Panel</h1>
+        <p>Monitor encrypted student activity · Issue warnings · Manage sessions</p>
+      </div>
+    </div>
+    <button class="btn btn-primary" id="loginBtn">
+      <span aria-hidden="true">🔐</span> Admin Login
+    </button>
+  </header>
+
+  <!-- Locked state -->
+  <div id="lockedState">
+    <div class="card">
+      <div class="login-prompt">
+        <div class="login-prompt-icon" aria-hidden="true">🔒</div>
+        <p class="login-prompt-title">Admin Access Required</p>
+        <p class="login-prompt-text">Click "Admin Login" in the header to authenticate and access the dashboard.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Dashboard -->
+  <div id="adminContent" style="display:none;">
+
+    <div class="stats-grid" role="region" aria-label="Dashboard statistics">
+      <div class="stat-card blue"><div class="stat-label">👥 Total Students</div><div class="stat-value" id="totalStudents">0</div></div>
+      <div class="stat-card amber"><div class="stat-label">📄 Encrypted Files</div><div class="stat-value" id="totalFiles">0</div></div>
+      <div class="stat-card red"><div class="stat-label">⚠️ Active Issues</div><div class="stat-value" id="activeIssues">0</div></div>
+    </div>
+
+    <section class="card" aria-labelledby="studentsHeading">
+      <div class="card-header">
+        <h2 class="card-title" id="studentsHeading">
+          <span class="card-title-num" aria-hidden="true">01</span>
+          <span class="card-title-label">Student Sessions</span>
+        </h2>
+        <input type="text" id="searchStudent" class="search-input" placeholder="Search by name or ID…" aria-label="Search students">
+      </div>
+      <div class="section-divider" aria-hidden="true"></div>
+      <div id="studentsList" role="list" aria-live="polite"></div>
+    </section>
+
+    <section class="card" aria-labelledby="issuesHeading">
+      <div class="card-header">
+        <h2 class="card-title" id="issuesHeading">
+          <span class="card-title-num" aria-hidden="true">02</span>
+          <span class="card-title-label">Active Admin Issues</span>
+        </h2>
+      </div>
+      <div class="section-divider" aria-hidden="true"></div>
+      <div id="allIssuesContainer" aria-live="polite"></div>
+    </section>
+  </div>
+</div>
+
+<!-- LOGIN MODAL -->
+<div class="modal-overlay" id="loginModal" role="dialog" aria-modal="true" aria-labelledby="loginModalTitle">
+  <div class="modal" style="max-width:380px;">
+    <div class="modal-header">
+      <div class="modal-icon" aria-hidden="true">🔐</div>
+      <div>
+        <h3 class="modal-title" id="loginModalTitle">Admin Login</h3>
+        <p class="modal-subtitle">Enter your admin credentials</p>
+      </div>
+    </div>
+    <div class="form-group">
+      <label class="form-label" for="adminPwInput">Admin Password</label>
+      <div class="pw-wrap">
+        <input type="password" id="adminPwInput" class="form-input" placeholder="Enter admin password" autocomplete="current-password">
+        <button type="button" class="pw-toggle" id="toggleAdminPw" aria-label="Show/hide password">👁</button>
+      </div>
+    </div>
+    <div id="loginError" class="status-msg"></div>
+    <div class="form-actions">
+      <button class="btn btn-ghost" id="cancelLoginBtn">Cancel</button>
+      <button class="btn btn-amber" id="confirmLoginBtn">
+        <span aria-hidden="true">🔓</span> Authenticate
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ISSUE WARNING MODAL -->
+<div class="modal-overlay" id="issueModal" role="dialog" aria-modal="true" aria-labelledby="issueModalTitle">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-icon" aria-hidden="true">⚠️</div>
+      <div>
+        <h3 class="modal-title" id="issueModalTitle">Send Warning</h3>
+        <p class="modal-subtitle" id="issueStudentLabel">Issue a notice to a student session</p>
+      </div>
+    </div>
+    <div class="form-group">
+      <label class="form-label" for="issueStudentId">Student</label>
+      <input type="text" id="issueStudentId" class="form-input" readonly>
+    </div>
+    <div class="form-group">
+      <label class="form-label" for="issueMessage">Warning Message</label>
+      <textarea id="issueMessage" class="form-input form-textarea" placeholder="Describe the policy violation or important notice…"></textarea>
+    </div>
+    <div id="issueStatus" class="status-msg" role="status" aria-live="polite"></div>
+    <div class="form-actions">
+      <button class="btn btn-ghost" id="cancelIssueBtn">Cancel</button>
+      <button class="btn btn-amber" id="submitIssueBtn">
+        <span aria-hidden="true">📢</span> Send Warning
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- VIEW FILES MODAL -->
+<div class="modal-overlay" id="filesModal" role="dialog" aria-modal="true" aria-labelledby="filesModalTitle">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-icon" aria-hidden="true">📂</div>
+      <div>
+        <h3 class="modal-title" id="filesModalTitle">Student Files</h3>
+        <p class="modal-subtitle" id="filesModalSub">Encrypted — admin cannot read contents</p>
+      </div>
+    </div>
+    <div id="filesModalList" class="file-list-modal"></div>
+    <div class="form-actions" style="margin-top:20px;">
+      <button class="btn btn-ghost" id="closeFilesModal">Close</button>
+    </div>
+  </div>
+</div>
+
+<!-- DELETE FILE MODAL (from files view) -->
+<div class="modal-overlay" id="delFileModal" role="dialog" aria-modal="true" aria-labelledby="delFileModalTitle">
+  <div class="modal" style="max-width:380px;">
+    <div class="modal-header">
+      <div class="modal-icon" style="background:var(--danger);" aria-hidden="true">🗑️</div>
+      <div>
+        <h3 class="modal-title" id="delFileModalTitle">Delete File?</h3>
+        <p class="modal-subtitle" id="delFileLabel">This cannot be undone.</p>
+      </div>
+    </div>
+    <div class="form-actions">
+      <button class="btn btn-ghost" id="cancelDelFileBtn">Cancel</button>
+      <button class="btn btn-danger" id="confirmDelFileBtn">Delete File</button>
+    </div>
+  </div>
+</div>
+
+<!-- DELETE STUDENT MODAL -->
+<div class="modal-overlay" id="delStudentModal" role="dialog" aria-modal="true" aria-labelledby="delStudentTitle">
+  <div class="modal" style="max-width:400px;">
+    <div class="modal-header">
+      <div class="modal-icon" style="background:var(--danger);" aria-hidden="true">🗑️</div>
+      <div>
+        <h3 class="modal-title" id="delStudentTitle">Delete Student?</h3>
+        <p class="modal-subtitle" id="delStudentLabel">All encrypted files and session data will be permanently removed.</p>
+      </div>
+    </div>
+    <div class="form-actions">
+      <button class="btn btn-ghost" id="cancelDelStudentBtn">Cancel</button>
+      <button class="btn btn-danger" id="confirmDelStudentBtn">Delete Student &amp; Data</button>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ══════════════════════════════════════
+   DB CORE  (same schema as student side)
+══════════════════════════════════════ */
+class UniSafeCore {
+  constructor() { this.dbName='UniSafeDB'; this.dbVersion=2; this.db=null; }
+
+  async initDB() {
+    return new Promise((res,rej) => {
+      const req = indexedDB.open(this.dbName, this.dbVersion);
+      req.onerror = () => rej(req.error);
+      req.onsuccess = () => { this.db=req.result; res(); };
+      req.onupgradeneeded = e => {
+        const db = e.target.result;
+        ['sessions','files','activities','admin_issues'].forEach(s => {
+          if (!db.objectStoreNames.contains(s))
+            db.createObjectStore(s, s==='activities'||s==='admin_issues' ? {keyPath:'id',autoIncrement:true} : {keyPath:'id'});
+        });
+      };
+    });
+  }
+
+  _s(name,mode='readonly') { return this.db.transaction(name,mode).objectStore(name); }
+  put(store,data) { return new Promise((res,rej)=>{ const r=this._s(store,'readwrite').put(data); r.onsuccess=res; r.onerror=rej; }); }
+  getAll(store)   { return new Promise((res,rej)=>{ const r=this._s(store).getAll(); r.onsuccess=()=>res(r.result||[]); r.onerror=rej; }); }
+  del(store,key)  { return new Promise((res,rej)=>{ const r=this._s(store,'readwrite').delete(key); r.onsuccess=res; r.onerror=rej; }); }
+
+  getSessions()   { return this.getAll('sessions'); }
+  getAllFiles()    { return this.getAll('files'); }
+  getAllIssues()   { return this.getAll('admin_issues'); }
+  deleteFile(id)  { return this.del('files', id); }
+  deleteStudent(id) { return this.del('sessions', id); }
+  deleteIssue(id) { return this.del('admin_issues', id); }
+
+  async addIssue(issue) {
+    await this.put('admin_issues', {...issue, createdAt:new Date().toISOString(), resolved:false});
+  }
+
+  async resolveIssue(id) {
+    const all = await this.getAll('admin_issues');
+    const issue = all.find(i=>i.id==id);
+    if (issue) { issue.resolved=true; await this.put('admin_issues', issue); }
+  }
+}
+
+/* ══════════════════════════════════════
+   HELPERS
+══════════════════════════════════════ */
+const esc = s => String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+const fmtSize = b => b<1024 ? b+' B' : b<1048576 ? (b/1024).toFixed(1)+' KB' : (b/1048576).toFixed(1)+' MB';
+
+function showSt(el, msg, type) {
+  el.textContent=msg; el.className='status-msg '+type; el.style.display='block';
+  clearTimeout(el._t); el._t=setTimeout(()=>el.style.display='none', 5000);
+}
+
+function openM(id)  { document.getElementById(id).classList.add('active'); }
+function closeM(id) { document.getElementById(id).classList.remove('active'); }
+
+/* Close modals on backdrop / Escape */
+['loginModal','issueModal','filesModal','delFileModal','delStudentModal'].forEach(id => {
+  document.getElementById(id).addEventListener('click', e => { if(e.target.id===id) closeM(id); });
+});
+document.addEventListener('keydown', e => {
+  if (e.key==='Escape') ['loginModal','issueModal','filesModal','delFileModal','delStudentModal'].forEach(closeM);
+});
+
+/* ══════════════════════════════════════
+   STATE
+══════════════════════════════════════ */
+const core = new UniSafeCore();
+let authed       = false;
+let pendIssueId  = null;   // sessionId for warning
+let pendDelFile  = null;   // {fileId}
+let pendDelStud  = null;   // sessionId
+let viewingFiles = [];     // files currently shown in filesModal
+
+/* ══════════════════════════════════════
+   ADMIN LOGIN MODAL (no prompt!)
+══════════════════════════════════════ */
+document.getElementById('loginBtn').addEventListener('click', () => {
+  document.getElementById('adminPwInput').value='';
+  document.getElementById('loginError').style.display='none';
+  openM('loginModal');
+  setTimeout(()=>document.getElementById('adminPwInput').focus(), 80);
+});
+
+document.getElementById('toggleAdminPw').addEventListener('click', () => {
+  const inp = document.getElementById('adminPwInput');
+  inp.type = inp.type==='password' ? 'text' : 'password';
+  document.getElementById('toggleAdminPw').textContent = inp.type==='password' ? '👁' : '🙈';
+});
+
+document.getElementById('cancelLoginBtn').addEventListener('click', ()=>closeM('loginModal'));
+
+document.getElementById('adminPwInput').addEventListener('keydown', e => {
+  if (e.key==='Enter') document.getElementById('confirmLoginBtn').click();
+});
+
+document.getElementById('confirmLoginBtn').addEventListener('click', () => {
+  const pw = document.getElementById('adminPwInput').value;
+  if (pw === 'admin123') {
+    authed=true;
+    closeM('loginModal');
+    document.getElementById('lockedState').style.display='none';
+    document.getElementById('adminContent').style.display='block';
+    const btn = document.getElementById('loginBtn');
+    btn.innerHTML='<span aria-hidden="true">✅</span> Admin Mode';
+    btn.className='btn btn-amber';
+    btn.disabled=true;
+    loadDashboard();
+    setInterval(()=>{ if(authed) loadDashboard(); }, 10000);
+  } else {
+    showSt(document.getElementById('loginError'), '✗ Wrong password. Access denied.', 'error');
+  }
+});
+
+/* ══════════════════════════════════════
+   DASHBOARD LOAD
+══════════════════════════════════════ */
+async function loadDashboard() {
+  if (!authed) return;
+  const [sessions, files, issues] = await Promise.all([
+    core.getSessions(), core.getAllFiles(), core.getAllIssues()
+  ]);
+  const activeIssues = issues.filter(i=>!i.resolved).length;
+  document.getElementById('totalStudents').textContent = sessions.length;
+  document.getElementById('totalFiles').textContent    = files.length;
+  document.getElementById('activeIssues').textContent  = activeIssues;
+  renderStudents(sessions, files, issues);
+  renderIssues(issues);
+}
+
+/* ══════════════════════════════════════
+   STUDENT LIST  (event delegation)
+══════════════════════════════════════ */
+function renderStudents(sessions, files, issues) {
+  const c = document.getElementById('studentsList');
+  if (!sessions.length) {
+    c.innerHTML=`<div class="no-issues"><div class="no-issues-icon" aria-hidden="true">👤</div><p>No students registered yet.</p></div>`;
+    return;
+  }
+  const q = (document.getElementById('searchStudent').value||'').toLowerCase();
+  const filtered = sessions.filter(s =>
+    s.name?.toLowerCase().includes(q) || s.id.toLowerCase().includes(q)
+  );
+  if (!filtered.length) { c.innerHTML=`<div class="no-issues"><p>No students match your search.</p></div>`; return; }
+
+  c.innerHTML = filtered.map(s => {
+    const sFiles  = files.filter(f=>f.sessionId===s.id);
+    const total   = sFiles.reduce((sum,f)=>sum+(f.encryptedData?.length||0),0);
+    const warns   = issues.filter(i=>i.sessionId===s.id&&!i.resolved);
+    const initials= (s.name||'??').split(' ').map(n=>n[0]).join('').toUpperCase().slice(0,2);
+    return `
+      <div class="student-row" role="listitem">
+        <div class="student-ident">
+          <div class="student-avatar" aria-hidden="true">${esc(initials)}</div>
+          <div>
+            <div class="student-name">${esc(s.name||'Unnamed')}</div>
+            <div class="student-id">${s.id.substring(0,16)}…</div>
+          </div>
+        </div>
+        <div class="student-meta">
+          <span>📁 ${sFiles.length} file${sFiles.length!==1?'s':''} · ${fmtSize(total)}</span>
+          ${warns.length
+            ? `<span class="badge badge-danger">⚠ ${warns.length} warning${warns.length>1?'s':''}</span>`
+            : `<span class="badge badge-safe">✓ No warnings</span>`}
+        </div>
+        <div class="student-actions">
+          <button class="btn btn-ghost btn-sm" data-view="${s.id}" aria-label="View files for ${esc(s.name)}">
+            <span aria-hidden="true">📂</span> Files
+          </button>
+          <button class="btn btn-warning btn-sm" data-warn="${s.id}" data-wname="${esc(s.name)}" aria-label="Warn ${esc(s.name)}">
+            <span aria-hidden="true">⚠️</span> Warn
+          </button>
+          <button class="btn btn-danger btn-sm" data-delete="${s.id}" data-dname="${esc(s.name)}" aria-label="Delete ${esc(s.name)}">
+            <span aria-hidden="true">🗑️</span> Delete
+          </button>
+        </div>
+      </div>`;
+  }).join('');
+
+  /* Attach via delegation */
+  c.querySelectorAll('[data-view]').forEach(b => b.addEventListener('click', ()=>openViewFiles(b.dataset.view, files)));
+  c.querySelectorAll('[data-warn]').forEach(b => b.addEventListener('click', ()=>openIssue(b.dataset.warn, b.dataset.wname)));
+  c.querySelectorAll('[data-delete]').forEach(b => b.addEventListener('click', ()=>openDelStudent(b.dataset.delete, b.dataset.dname)));
+}
+
+document.getElementById('searchStudent').addEventListener('input', loadDashboard);
+
+/* ══════════════════════════════════════
+   VIEW FILES MODAL
+══════════════════════════════════════ */
+function openViewFiles(sessionId, allFiles) {
+  if (!authed) return;
+  viewingFiles = allFiles.filter(f=>f.sessionId===sessionId);
+  document.getElementById('filesModalSub').textContent = viewingFiles.length
+    ? `${viewingFiles.length} encrypted file${viewingFiles.length!==1?'s':''} — admin cannot read contents`
+    : 'No files uploaded by this student';
+
+  if (!viewingFiles.length) {
+    document.getElementById('filesModalList').innerHTML=`<div class="no-issues" style="padding:20px 0;"><p>No files uploaded yet.</p></div>`;
+  } else {
+    document.getElementById('filesModalList').innerHTML = viewingFiles.map(f=>`
+      <div class="file-row-modal">
+        <div class="file-info">
+          <div class="file-name">${esc(f.name)}</div>
+          <div class="file-size">${fmtSize(f.size)} · <span class="file-enc">🔒 Encrypted</span></div>
+        </div>
+        <button class="btn btn-sm btn-danger" data-fid="${f.id}" data-fname="${esc(f.name)}" aria-label="Delete ${esc(f.name)}">🗑️</button>
+      </div>`).join('');
+
+    document.getElementById('filesModalList').querySelectorAll('[data-fid]').forEach(b => {
+      b.addEventListener('click', () => {
+        openM('delFileModal');
+        pendDelFile = { id: b.dataset.fid, name: b.dataset.fname, sessionId };
+        document.getElementById('delFileLabel').textContent = `"${b.dataset.fname}" will be permanently removed.`;
+      });
+    });
+  }
+  openM('filesModal');
+}
+
+document.getElementById('closeFilesModal').addEventListener('click', ()=>closeM('filesModal'));
+
+/* Delete individual file from within files modal */
+document.getElementById('cancelDelFileBtn').addEventListener('click', ()=>closeM('delFileModal'));
+document.getElementById('confirmDelFileBtn').addEventListener('click', async () => {
+  if (!pendDelFile) return;
+  await core.deleteFile(pendDelFile.id);
+  closeM('delFileModal');
+  // Refresh the files modal
+  const allFiles = await core.getAllFiles();
+  openViewFiles(pendDelFile.sessionId, allFiles);
+  pendDelFile=null;
+  loadDashboard();
+});
+
+/* ══════════════════════════════════════
+   ISSUE WARNING MODAL
+══════════════════════════════════════ */
+function openIssue(sessionId, studentName) {
+  if (!authed) return;
+  pendIssueId = sessionId;
+  document.getElementById('issueStudentId').value = `${studentName} · ${sessionId}`;
+  document.getElementById('issueMessage').value = '';
+  document.getElementById('issueStatus').style.display = 'none';
+  openM('issueModal');
+  setTimeout(()=>document.getElementById('issueMessage').focus(), 80);
+}
+
+document.getElementById('cancelIssueBtn').addEventListener('click', ()=>closeM('issueModal'));
+
+document.getElementById('submitIssueBtn').addEventListener('click', async () => {
+  const msg = document.getElementById('issueMessage').value.trim();
+  const stEl = document.getElementById('issueStatus');
+  if (!msg) { showSt(stEl,'⚠ Warning message is required.','error'); return; }
+  await core.addIssue({ sessionId: pendIssueId, message: msg, type:'warning' });
+  showSt(stEl,'✓ Warning sent — student will see it immediately.','success');
+  setTimeout(()=>{ closeM('issueModal'); document.getElementById('issueMessage').value=''; loadDashboard(); }, 1400);
+});
+
+/* ══════════════════════════════════════
+   DELETE STUDENT MODAL
+══════════════════════════════════════ */
+function openDelStudent(sessionId, studentName) {
+  if (!authed) return;
+  pendDelStud = sessionId;
+  document.getElementById('delStudentLabel').textContent = `"${studentName}" — all encrypted files and session data will be permanently removed.`;
+  openM('delStudentModal');
+}
+
+document.getElementById('cancelDelStudentBtn').addEventListener('click', ()=>closeM('delStudentModal'));
+
+document.getElementById('confirmDelStudentBtn').addEventListener('click', async () => {
+  if (!pendDelStud) return;
+  const btn = document.getElementById('confirmDelStudentBtn');
+  btn.disabled=true; btn.textContent='Deleting…';
+
+  const files = await core.getAllFiles();
+  for (const f of files.filter(f=>f.sessionId===pendDelStud)) await core.deleteFile(f.id);
+  await core.deleteStudent(pendDelStud);
+  const issues = await core.getAllIssues();
+  for (const i of issues.filter(i=>i.sessionId===pendDelStud)) await core.deleteIssue(i.id);
+
+  closeM('delStudentModal');
+  pendDelStud=null;
+  btn.disabled=false; btn.innerHTML='Delete Student &amp; Data';
+  loadDashboard();
+});
+
+/* ══════════════════════════════════════
+   ACTIVE ISSUES PANEL
+══════════════════════════════════════ */
+function renderIssues(issues) {
+  const active = issues.filter(i=>!i.resolved);
+  const c = document.getElementById('allIssuesContainer');
+  if (!active.length) {
+    c.innerHTML=`<div class="no-issues"><div class="no-issues-icon" aria-hidden="true">✅</div><p>No pending issues — all clear.</p></div>`;
+    return;
+  }
+  c.innerHTML = active.map(i=>`
+    <div class="issue-item">
+      <div class="issue-item-header">
+        <span class="issue-student-id">Session: ${i.sessionId?.substring(0,16)}…</span>
+        <span class="issue-time">${new Date(i.createdAt).toLocaleString()}</span>
+      </div>
+      <div class="issue-message">${esc(i.message)}</div>
+      <button class="btn btn-ghost btn-sm" data-resolve="${i.id}">
+        <span aria-hidden="true">✅</span> Mark Resolved
+      </button>
+    </div>`).join('');
+
+  c.querySelectorAll('[data-resolve]').forEach(b => {
+    b.addEventListener('click', async () => {
+      await core.resolveIssue(b.dataset.resolve);
+      loadDashboard();
+    });
+  });
+}
+
+/* ══════════════════════════════════════
+   INIT
+══════════════════════════════════════ */
+(async () => { await core.initDB(); })();
+</script>
+<script>
+  if ("serviceWorker" in navigator) {
+    window.addEventListener("load", () => {
+      navigator.serviceWorker.register("./sw.js").catch(console.error);
+    });
+  }
+</script>
+</body>
+</html>
