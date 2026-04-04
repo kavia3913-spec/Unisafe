@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -144,7 +143,7 @@
     .status-msg { display:none; padding:11px 15px; border-radius:var(--radius-md); font-size:13px; margin-top:14px; font-weight:500; animation:statusFade 0.18s ease; }
     @keyframes statusFade { from{opacity:0;transform:translateY(-6px)} to{opacity:1;transform:translateY(0)} }
     .status-msg.success { background:var(--safe-bg); border:1px solid rgba(46,125,82,0.22); color:var(--safe); }
-    .status-msg.error { background:var(--danger-bg); border:1px solid rgba(181,61,46,0.22); color:var(--danger); }
+    .status-msg.error   { background:var(--danger-bg); border:1px solid rgba(181,61,46,0.22); color:var(--danger); }
 
     /* LOGIN MODAL */
     #loginModal .modal::before { background:linear-gradient(90deg,var(--amber),var(--amber-light)); }
@@ -152,6 +151,14 @@
     .pw-wrap .form-input { padding-right:44px; }
     .pw-toggle { position:absolute; right:12px; top:50%; transform:translateY(-50%); background:none; border:none; cursor:pointer; color:var(--ink-faint); font-size:15px; padding:4px; }
     .pw-toggle:hover { color:var(--ink-mid); }
+
+    /* ACTIVITY FEED */
+    .activity-item { padding:16px 18px; background:#f6f2ea; border:1px solid var(--border); border-left:3px solid var(--safe); border-radius:var(--radius-md); margin-bottom:10px; }
+    .activity-item-header { display:flex; justify-content:space-between; align-items:flex-start; gap:10px; margin-bottom:8px; flex-wrap:wrap; }
+    .activity-type { font-family:'JetBrains Mono',monospace; font-size:11px; color:var(--safe); font-weight:600; text-transform:uppercase; letter-spacing:0.08em; }
+    .activity-time { font-family:'JetBrains Mono',monospace; font-size:11px; color:var(--ink-faint); }
+    .activity-message { font-size:14px; color:var(--ink-mid); margin-bottom:6px; line-height:1.55; }
+    .activity-meta { font-size:12px; color:var(--ink-light); font-family:'JetBrains Mono',monospace; }
 
     @media (max-width:700px) {
       body { padding:16px 14px 48px; }
@@ -224,6 +231,17 @@
       </div>
       <div class="section-divider" aria-hidden="true"></div>
       <div id="allIssuesContainer" aria-live="polite"></div>
+    </section>
+
+    <section class="card" aria-labelledby="activityHeading">
+      <div class="card-header">
+        <h2 class="card-title" id="activityHeading">
+          <span class="card-title-num" aria-hidden="true">03</span>
+          <span class="card-title-label">Live Activity Feed</span>
+        </h2>
+      </div>
+      <div class="section-divider" aria-hidden="true"></div>
+      <div id="activityFeed" aria-live="polite"></div>
     </section>
   </div>
 </div>
@@ -362,8 +380,8 @@ class UniSafeCore {
   del(store,key)  { return new Promise((res,rej)=>{ const r=this._s(store,'readwrite').delete(key); r.onsuccess=res; r.onerror=rej; }); }
 
   getSessions()   { return this.getAll('sessions'); }
-  getAllFiles()    { return this.getAll('files'); }
-  getAllIssues()   { return this.getAll('admin_issues'); }
+  getAllFiles()   { return this.getAll('files'); }
+  getAllIssues()  { return this.getAll('admin_issues'); }
   deleteFile(id)  { return this.del('files', id); }
   deleteStudent(id) { return this.del('sessions', id); }
   deleteIssue(id) { return this.del('admin_issues', id); }
@@ -405,14 +423,53 @@ document.addEventListener('keydown', e => {
    STATE
 ══════════════════════════════════════ */
 const core = new UniSafeCore();
-let authed       = false;
-let pendIssueId  = null;   // sessionId for warning
-let pendDelFile  = null;   // {fileId}
-let pendDelStud  = null;   // sessionId
-let viewingFiles = [];     // files currently shown in filesModal
+let authed = false;
+let pendIssueId = null;
+let pendDelFile = null;
+let pendDelStud = null;
+let viewingFiles = [];
+let unsubActivities = null;
+
+function activityText(type) {
+  switch (type) {
+    case 'session_created': return 'Session created';
+    case 'file_uploaded': return 'File uploaded';
+    case 'file_deleted': return 'File deleted';
+    case 'warning_sent': return 'Warning sent';
+    case 'decrypt_success': return 'File decrypted';
+    case 'decrypt_fail': return 'Decrypt failed';
+    default: return type || 'Activity';
+  }
+}
+
+function renderCloudActivities(items) {
+  const c = document.getElementById('activityFeed');
+  if (!c) return;
+  if (!items.length) {
+    c.innerHTML = `<div class="no-issues"><p>No activity yet.</p></div>`;
+    return;
+  }
+
+  c.innerHTML = items.slice(0, 25).map(i => {
+    const timeText = i.createdAt?.toDate ? i.createdAt.toDate().toLocaleString() : (i.createdAt || 'Just now');
+    return `
+      <div class="activity-item">
+        <div class="activity-item-header">
+          <span class="activity-type">${esc(activityText(i.type))}</span>
+          <span class="activity-time">${esc(timeText)}</span>
+        </div>
+        <div class="activity-message">Student: ${esc(i.studentName || 'Unknown')}</div>
+        <div class="activity-meta">
+          ${i.sessionId ? `Session: ${esc(i.sessionId)}` : ''}
+          ${i.fileName ? `<br>File: ${esc(i.fileName)}` : ''}
+          ${i.message ? `<br>Message: ${esc(i.message)}` : ''}
+        </div>
+      </div>`;
+  }).join('');
+}
 
 /* ══════════════════════════════════════
-   ADMIN LOGIN MODAL (no prompt!)
+   ADMIN LOGIN MODAL
 ══════════════════════════════════════ */
 document.getElementById('loginBtn').addEventListener('click', () => {
   document.getElementById('adminPwInput').value='';
@@ -445,6 +502,9 @@ document.getElementById('confirmLoginBtn').addEventListener('click', () => {
     btn.className='btn btn-amber';
     btn.disabled=true;
     loadDashboard();
+    if (window.UniSafeLog && !unsubActivities) {
+      unsubActivities = window.UniSafeLog.listen(renderCloudActivities);
+    }
     setInterval(()=>{ if(authed) loadDashboard(); }, 10000);
   } else {
     showSt(document.getElementById('loginError'), '✗ Wrong password. Access denied.', 'error');
@@ -465,10 +525,15 @@ async function loadDashboard() {
   document.getElementById('activeIssues').textContent  = activeIssues;
   renderStudents(sessions, files, issues);
   renderIssues(issues);
+
+  if (window.UniSafeLog) {
+    const cloudItems = await window.UniSafeLog.getActivities();
+    renderCloudActivities(cloudItems);
+  }
 }
 
 /* ══════════════════════════════════════
-   STUDENT LIST  (event delegation)
+   STUDENT LIST
 ══════════════════════════════════════ */
 function renderStudents(sessions, files, issues) {
   const c = document.getElementById('studentsList');
@@ -516,7 +581,6 @@ function renderStudents(sessions, files, issues) {
       </div>`;
   }).join('');
 
-  /* Attach via delegation */
   c.querySelectorAll('[data-view]').forEach(b => b.addEventListener('click', ()=>openViewFiles(b.dataset.view, files)));
   c.querySelectorAll('[data-warn]').forEach(b => b.addEventListener('click', ()=>openIssue(b.dataset.warn, b.dataset.wname)));
   c.querySelectorAll('[data-delete]').forEach(b => b.addEventListener('click', ()=>openDelStudent(b.dataset.delete, b.dataset.dname)));
@@ -559,13 +623,11 @@ function openViewFiles(sessionId, allFiles) {
 
 document.getElementById('closeFilesModal').addEventListener('click', ()=>closeM('filesModal'));
 
-/* Delete individual file from within files modal */
 document.getElementById('cancelDelFileBtn').addEventListener('click', ()=>closeM('delFileModal'));
 document.getElementById('confirmDelFileBtn').addEventListener('click', async () => {
   if (!pendDelFile) return;
   await core.deleteFile(pendDelFile.id);
   closeM('delFileModal');
-  // Refresh the files modal
   const allFiles = await core.getAllFiles();
   openViewFiles(pendDelFile.sessionId, allFiles);
   pendDelFile=null;
@@ -592,6 +654,12 @@ document.getElementById('submitIssueBtn').addEventListener('click', async () => 
   const stEl = document.getElementById('issueStatus');
   if (!msg) { showSt(stEl,'⚠ Warning message is required.','error'); return; }
   await core.addIssue({ sessionId: pendIssueId, message: msg, type:'warning' });
+  window.UniSafeLog?.save({
+    type: 'warning_sent',
+    studentName: document.getElementById('issueStudentId').value.split(' · ')[0],
+    sessionId: pendIssueId,
+    message: msg
+  });
   showSt(stEl,'✓ Warning sent — student will see it immediately.','success');
   setTimeout(()=>{ closeM('issueModal'); document.getElementById('issueMessage').value=''; loadDashboard(); }, 1400);
 });
@@ -667,5 +735,6 @@ function renderIssues(issues) {
     });
   }
 </script>
+<script type="module" src="./firebase.js"></script>
 </body>
 </html>
