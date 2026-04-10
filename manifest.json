@@ -1,9 +1,17 @@
 {
   "name": "UniSafe",
   "short_name": "UniSafe",
+  "description": "Encrypted student file vault with admin monitoring",
   "start_url": "./index.html",
   "scope": "./",
   "display": "standalone",
   "background_color": "#f5f0e8",
-  "theme_color": "#1c1a16"
+  "theme_color": "#1c1a16",
+  "shortcuts": [
+    {
+      "name": "Admin Panel",
+      "url": "./admin.html",
+      "description": "Open admin dashboard"
+    }
+  ]
 }
